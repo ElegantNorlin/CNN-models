@@ -6,14 +6,14 @@ class AlexNet(nn.Module):
     def __init__(self, num_classes=1000, init_weights=False):
         super(AlexNet, self).__init__()
         # 卷积层的定义，具体的输入输出特征尺寸计算公式可以自行学习其他资料，利用好网络这把双刃剑
+        '''
+                    nn.Conv2d(padding=2)其中的padding接收的参数可以是整型也可以是元组
+                    如果是整形，那么相当于再图片的四周补上padding行0
+                    如果是元组(a,b):
+                        在图片的上下填充a行0
+                        在图片的左右填充b列0
+                    '''
         self.features = nn.Sequential(
-            '''
-            nn.Conv2d(padding=2)其中的padding接收的参数可以是整型也可以是元组
-            如果是整形，那么相当于再图片的四周补上padding行0
-            如果是元组(a,b):
-                在图片的上下填充a行0
-                在图片的左右填充b列0
-            '''
             nn.Conv2d(3, 96, kernel_size=11, stride=4, padding=2),  # input[3, 224, 224]  output[96, 55, 55]
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=3, stride=2),                  # output[96, 27, 27]

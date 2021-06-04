@@ -78,17 +78,20 @@ def main():
             # 优化器进行参数更新
             optimizer.step()
 
+
+            # 验证过程
             # 信息打印的过程
             # print statistics
             # 累加到running_loss变量当中
             running_loss += loss.item()
             if step % 500 == 499:    # print every 500 mini-batches
-                # torch.no_grad()被该语句管理部分的参数部位参与梯度计算
+                # torch.no_grad()被该语句管理部分的参数不参与梯度计算(正处于验证过程，不要对参数的梯度进行更改)
                 with torch.no_grad():
                     outputs = net(val_image)  # [batch, 10]
                     # 寻找输出特征中最大值的索引是多少，dim=1的意思是我们跳过batch，从索引为1的维度开始寻找
                     # [1]我们只需要拿到最大值所在的索引，而不需要知道具体的数值
                     predict_y = torch.max(outputs, dim=1)[1]
+                    print(torch.max(outputs, dim=1))
                     # torch.eq(predict_y, val_label)将预测结果于数据的真是标签对比是否相等，返回1或0
                     # sum()加起来就知道在本次训练过程中预测对了多少个样本
                     accuracy = torch.eq(predict_y, val_label).sum().item() / val_label.size(0)
