@@ -139,6 +139,7 @@ def main():
 
         # validate验证
         net.eval()
+        # 准确率累积变量
         acc = 0.0  # accumulate accurate number / epoch
         # torch.no_grad()表示不参数梯度不发生变化，验证过程模型参数梯度不应该被更改
         with torch.no_grad():

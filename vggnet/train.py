@@ -65,6 +65,7 @@ def main():
     optimizer = optim.Adam(net.parameters(), lr=0.0001)
 
     epochs = 30
+    # 设置一个参数来更新历史最高精确率
     best_acc = 0.0
     save_path = './{}Net.pth'.format(model_name)
     train_steps = len(train_loader)
@@ -78,36 +79,55 @@ def main():
         # step为枚举的索引
         # data为索引对应的图片和标签值
         for step, data in enumerate(train_bar):
-            # 取出图片和标签值
+            # 取出训练集的图片和标签值
             images, labels = data
+            # 清空梯度
             optimizer.zero_grad()
+            # 将训练集输入网络
             outputs = net(images.to(device))
+            # 计算训练损失
             loss = loss_function(outputs, labels.to(device))
+            # 梯度反向传播
             loss.backward()
+            # 参数更新
             optimizer.step()
 
             # print statistics
+            # 损失累加
             running_loss += loss.item()
 
+            # 打印训练轮数和本轮的训练损失
             train_bar.desc = "train epoch[{}/{}] loss:{:.3f}".format(epoch + 1,
                                                                      epochs,
                                                                      loss)
-
+        # 验证集验证代码
         # validate
         net.eval()
+        # 设定一个参数来累计精确率，以便于后面求得平均精确率
         acc = 0.0  # accumulate accurate number / epoch
+        # 使用torch.no_grad()在预测过程不会记录梯度
         with torch.no_grad():
+            # 这个是运行时显示进度条的工具
             val_bar = tqdm(validate_loader)
+            # 迭代数据集
             for val_data in val_bar:
+                # 取出验证集的图片和标签值
                 val_images, val_labels = val_data
+                # 将验证集数据输入网络
                 outputs = net(val_images.to(device))
+                # output = torch.max(input, dim)
+                # input是softmax函数输出的一个tensor
+                # dim是max函数索引的维度0/1，0是每列的最大值，1是每行的最大值
                 predict_y = torch.max(outputs, dim=1)[1]
+                # 累积精确率
                 acc += torch.eq(predict_y, val_labels.to(device)).sum().item()
-
+        # 求本轮训练的平均精确率
         val_accurate = acc / val_num
+        # 打印本轮训练结果的信息
         print('[epoch %d] train_loss: %.3f  val_accuracy: %.3f' %
               (epoch + 1, running_loss / train_steps, val_accurate))
 
+        # 更新最高精确率
         if val_accurate > best_acc:
             best_acc = val_accurate
             torch.save(net.state_dict(), save_path)
