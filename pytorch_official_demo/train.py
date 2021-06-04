@@ -52,13 +52,19 @@ def main():
     optimizer = optim.Adam(net.parameters(), lr=0.001)
     # 迭代训练集（epoch为数据集迭代的次数）
     for epoch in range(5):  # loop over the dataset multiple times
-        # 累加训练过程的损失
+        # 累加训练过程的损失,后面用来打印本轮训练过程的平均精度而设置的
         running_loss = 0.0
+        # enumerate(train_loader, start=0)从索引0开始迭代train_loader数据集
+        # step为索引号
+        # data为对应索引数据集中的数据
         for step, data in enumerate(train_loader, start=0):
             # get the inputs; data is a list of [inputs, labels]
+            # inputs为当前要训练的图片
+            # labels为当前训练图片的真实标签值
             inputs, labels = data
 
             # zero the parameter gradients
+            # 把模型中参数的梯度置为0
             optimizer.zero_grad()
             # forward + backward + optimize
             # 将输入输入到网络中得到输出
@@ -77,7 +83,7 @@ def main():
             # 累加到running_loss变量当中
             running_loss += loss.item()
             if step % 500 == 499:    # print every 500 mini-batches
-                # torch.no_grad()可以避免梯度重复计算
+                # torch.no_grad()被该语句管理部分的参数部位参与梯度计算
                 with torch.no_grad():
                     outputs = net(val_image)  # [batch, 10]
                     # 寻找输出特征中最大值的索引是多少，dim=1的意思是我们跳过batch，从索引为1的维度开始寻找
