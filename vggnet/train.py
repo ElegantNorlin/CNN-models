@@ -39,19 +39,19 @@ def main():
         json_file.write(json_str)
 
     batch_size = 32
-    nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 8])  # number of workers
+    # nw = min([os.cpu_count(), batch_size if batch_size > 1 else 0, 8])  # number of workers
     print('Using {} dataloader workers every process'.format(nw))
 
     train_loader = torch.utils.data.DataLoader(train_dataset,
                                                batch_size=batch_size, shuffle=True,
-                                               num_workers=nw)
+                                               num_workers=0)
 
     validate_dataset = datasets.ImageFolder(root=os.path.join(image_path, "val"),
                                             transform=data_transform["val"])
     val_num = len(validate_dataset)
     validate_loader = torch.utils.data.DataLoader(validate_dataset,
                                                   batch_size=batch_size, shuffle=False,
-                                                  num_workers=nw)
+                                                  num_workers=0)
     print("using {} images for training, {} images for validation.".format(train_num,
                                                                            val_num))
 
@@ -71,9 +71,14 @@ def main():
     for epoch in range(epochs):
         # train
         net.train()
+        # 每一轮epoch训练都是把running_loss损失累加变量重新置0
         running_loss = 0.0
         train_bar = tqdm(train_loader)
+        # 使用枚举迭代训练集
+        # step为枚举的索引
+        # data为索引对应的图片和标签值
         for step, data in enumerate(train_bar):
+            # 取出图片和标签值
             images, labels = data
             optimizer.zero_grad()
             outputs = net(images.to(device))
