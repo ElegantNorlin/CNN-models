@@ -6,6 +6,7 @@ import torch.nn.functional as F
 class GoogLeNet(nn.Module):
     def __init__(self, num_classes=1000, aux_logits=True, init_weights=False):
         super(GoogLeNet, self).__init__()
+        # 定义变量判断是否使用辅助分类器，这个变量后面会用到
         self.aux_logits = aux_logits
 
         self.conv1 = BasicConv2d(3, 64, kernel_size=7, stride=2, padding=3)
@@ -102,8 +103,16 @@ class GoogLeNet(nn.Module):
                 nn.init.normal_(m.weight, 0, 0.01)
                 nn.init.constant_(m.bias, 0)
 
-
+# Inception结构都是类似的，只是每个Inception块参数不同，所以创建一个Inception类来简化代码量是有必要的
 class Inception(nn.Module):
+    # in_channels输入特征的通道数
+    # ch1x1为1x1卷积层卷积核个数（输出特征通道数）
+    # ch3x3red为3x3卷积之前的1x1卷积降维的卷积核个数
+    # ch3x3为3x3卷积层卷积核数量
+    # ch5x5red为5x5卷积层之前的1x1卷积层卷积核的数量
+    # ch5x5为5x5卷积层之前的1x1卷积层卷积核的数量
+    # pool_proj
+    # 在Inception块中每一组卷积的输出特征高和宽的尺寸是相等的
     def __init__(self, in_channels, ch1x1, ch3x3red, ch3x3, ch5x5red, ch5x5, pool_proj):
         super(Inception, self).__init__()
 
@@ -131,6 +140,8 @@ class Inception(nn.Module):
         branch4 = self.branch4(x)
 
         outputs = [branch1, branch2, branch3, branch4]
+        # 在pytorch中tensor的通道排列顺序是batch,channels,heigth,width
+        # 我们要在通道数上对4组特征做特征拼接，所以第二个参数为1
         return torch.cat(outputs, 1)
 
 
@@ -150,6 +161,7 @@ class InceptionAux(nn.Module):
         x = self.conv(x)
         # N x 128 x 4 x 4
         x = torch.flatten(x, 1)
+        # training=self.training在eval时值为False
         x = F.dropout(x, 0.5, training=self.training)
         # N x 2048
         x = F.relu(self.fc1(x), inplace=True)
