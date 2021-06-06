@@ -1,8 +1,9 @@
 import torch.nn as nn
 import torch
 
-
+# 18层和34层残差块结构搭建
 class BasicBlock(nn.Module):
+    # 因为对于18层和34层resnet网络而言，同一个残差块中卷积核的数量是相等的，所以这里expansion = 1
     expansion = 1
 
     def __init__(self, in_channel, out_channel, stride=1, downsample=None, **kwargs):
@@ -18,6 +19,7 @@ class BasicBlock(nn.Module):
 
     def forward(self, x):
         identity = x
+        # 判断是否要改变残差边的通道数
         if self.downsample is not None:
             identity = self.downsample(x)
 
@@ -28,12 +30,13 @@ class BasicBlock(nn.Module):
         out = self.conv2(out)
         out = self.bn2(out)
 
+        # 将卷积特征与残差相加
         out += identity
         out = self.relu(out)
 
         return out
 
-
+# 其他层数网络结构搭建
 class Bottleneck(nn.Module):
     """
     注意：原论文中，在虚线残差结构的主分支上，第一个1x1卷积层的步距是2，第二个3x3卷积层步距是1。
@@ -41,6 +44,7 @@ class Bottleneck(nn.Module):
     这么做的好处是能够在top1上提升大概0.5%的准确率。
     可参考Resnet v1.5 https://ngc.nvidia.com/catalog/model-scripts/nvidia:resnet_50_v1_5_for_pytorch
     """
+    # 这个变量是用来确定除了18层和34层resnet中卷积核的数量而定义的
     expansion = 4
 
     def __init__(self, in_channel, out_channel, stride=1, downsample=None,
@@ -84,7 +88,8 @@ class Bottleneck(nn.Module):
 
         return out
 
-
+# blocks_num每个残差块循环的次数
+# num_classes分类数
 class ResNet(nn.Module):
 
     def __init__(self,
@@ -96,6 +101,7 @@ class ResNet(nn.Module):
                  width_per_group=64):
         super(ResNet, self).__init__()
         self.include_top = include_top
+        # 输入特征深度（通道数）
         self.in_channel = 64
 
         self.groups = groups
@@ -119,6 +125,7 @@ class ResNet(nn.Module):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
 
     def _make_layer(self, block, channel, block_num, stride=1):
+        # 由于resnet中的多个残差块之间尺寸可能不相等，所以有可能要做像采样调整
         downsample = None
         if stride != 1 or self.in_channel != channel * block.expansion:
             downsample = nn.Sequential(
@@ -126,6 +133,7 @@ class ResNet(nn.Module):
                 nn.BatchNorm2d(channel * block.expansion))
 
         layers = []
+        # 在这里先定义一层残差的原因是，这一层的参数和其他残差不同，所以放到循环中不合适
         layers.append(block(self.in_channel,
                             channel,
                             downsample=downsample,
@@ -133,7 +141,7 @@ class ResNet(nn.Module):
                             groups=self.groups,
                             width_per_group=self.width_per_group))
         self.in_channel = channel * block.expansion
-
+        # 定义循环残差块这里的循环次数是比block_num的数值少一次的，因为在上面定义了一次残差了
         for _ in range(1, block_num):
             layers.append(block(self.in_channel,
                                 channel,

@@ -62,11 +62,13 @@ def main():
     # download url: https://download.pytorch.org/models/resnet34-333f7ec4.pth
     model_weight_path = "./resnet34-pre.pth"
     assert os.path.exists(model_weight_path), "file {} does not exist.".format(model_weight_path)
+    # 载入模型权重
     net.load_state_dict(torch.load(model_weight_path, map_location=device))
     # for param in net.parameters():
     #     param.requires_grad = False
 
     # change fc layer structure
+    # 权重的输入通道数
     in_channel = net.fc.in_features
     net.fc = nn.Linear(in_channel, 5)
     net.to(device)
