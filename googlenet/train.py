@@ -80,10 +80,13 @@ def main():
     for epoch in range(epochs):
         # train
         net.train()
+        # 定义累积损失变量
         running_loss = 0.0
         train_bar = tqdm(train_loader)
+        # 遍历训练集
         for step, data in enumerate(train_bar):
             images, labels = data
+            # 梯度清空
             optimizer.zero_grad()
             logits, aux_logits2, aux_logits1 = net(images.to(device))
             loss0 = loss_function(logits, labels.to(device))
